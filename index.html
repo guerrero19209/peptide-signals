@@ -1,0 +1,962 @@
+<!doctype html>
+<script type="application/json" id="cowork-artifact-meta">
+{
+  "name": "Peptide Signals",
+  "schemaVersion": 1,
+  "description": "Curated peptide news, trials, and regulatory intelligence aggregator. Covers FDA actions, ClinicalTrials.gov data, biotech trade press, and X/social shortcuts — filtered by category (Regulatory, Trials, Therapeutic, Biohacking, Trade Press, Research) with a grey-market watchlist. Light/dark mode persists in localStorage."
+}
+</script>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Peptide Signals — Curated Peptide Intelligence</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f6f7f9;
+    --panel: #ffffff;
+    --panel-2: #fafbfd;
+    --border: #e5e8ee;
+    --border-strong: #d2d7e0;
+    --text: #0f1419;
+    --text-dim: #5b6776;
+    --text-faint: #8a94a3;
+    --accent: #00966b;
+    --accent-soft: #e6f5ef;
+    --warn: #c1440e;
+    --warn-soft: #fcefe6;
+    --trial: #1f6feb;
+    --trial-soft: #e7efff;
+    --reg: #7a3acc;
+    --reg-soft: #f0e8fa;
+    --research: #0d8a8a;
+    --research-soft: #e0f3f3;
+    --trade: #b0640a;
+    --trade-soft: #fbf0db;
+    --bio: #c8136d;
+    --bio-soft: #fde6f0;
+    --shadow: 0 1px 2px rgba(15,20,25,.04), 0 1px 3px rgba(15,20,25,.05);
+    --shadow-hover: 0 1px 2px rgba(15,20,25,.06), 0 4px 12px rgba(15,20,25,.08);
+    --radius: 10px;
+    --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  [data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0b0f14;
+    --panel: #111720;
+    --panel-2: #161d28;
+    --border: #1f2733;
+    --border-strong: #2a3442;
+    --text: #e8ecf2;
+    --text-dim: #98a2b3;
+    --text-faint: #6b7585;
+    --accent: #20d99a;
+    --accent-soft: #0e2820;
+    --warn: #ff8a4c;
+    --warn-soft: #2a160a;
+    --trial: #5aa3ff;
+    --trial-soft: #0e1d33;
+    --reg: #b896ff;
+    --reg-soft: #1a1330;
+    --research: #4cd6d6;
+    --research-soft: #0a2222;
+    --trade: #ffb866;
+    --trade-soft: #2a1d0a;
+    --bio: #ff6bb1;
+    --bio-soft: #2a0e1d;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.3);
+    --shadow-hover: 0 1px 2px rgba(0,0,0,.5), 0 4px 16px rgba(0,0,0,.5);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14.5px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  a:hover { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px 20px 64px; }
+
+  /* HEADER */
+  .head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 22px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .logo {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), #0d8a8a);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: 800; font-size: 18px; letter-spacing: -.5px;
+    box-shadow: var(--shadow);
+  }
+  .title-block h1 {
+    margin: 0; font-size: 22px; letter-spacing: -.4px; font-weight: 700;
+  }
+  .title-block .tag {
+    color: var(--text-dim); font-size: 12.5px; margin-top: 2px;
+  }
+  .head-right {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .stat {
+    font-size: 12px; color: var(--text-dim);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 12px;
+    white-space: nowrap;
+  }
+  .stat b { color: var(--text); font-weight: 600; }
+  .iconbtn {
+    cursor: pointer;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    height: 34px; min-width: 34px; padding: 0 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background .15s, border-color .15s, transform .1s;
+  }
+  .iconbtn:hover { border-color: var(--border-strong); background: var(--panel-2); }
+  .iconbtn:active { transform: translateY(1px); }
+
+  /* TOOLBAR */
+  .toolbar {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+  .search {
+    flex: 1; min-width: 240px;
+    position: relative;
+  }
+  .search input {
+    width: 100%;
+    height: 38px;
+    padding: 0 14px 0 36px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    border-radius: 9px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .search svg { position: absolute; left: 12px; top: 11px; opacity: .5; }
+
+  .sort {
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    border-radius: 9px;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  /* CATEGORY TABS */
+  .tabs {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-bottom: 22px;
+  }
+  .tab {
+    cursor: pointer; user-select: none;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 7px 13px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all .15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .tab:hover { border-color: var(--border-strong); color: var(--text); }
+  .tab.active {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+  .tab .count {
+    background: rgba(127,127,127,.18);
+    border-radius: 999px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .tab.active .count {
+    background: rgba(255,255,255,.18);
+  }
+  .tab.warn { border-color: var(--warn); color: var(--warn); }
+  .tab.warn.active { background: var(--warn); color: white; border-color: var(--warn); }
+
+  /* CARDS */
+  .grid {
+    display: grid; gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 16px 14px;
+    display: flex; flex-direction: column;
+    box-shadow: var(--shadow);
+    transition: box-shadow .15s, transform .1s, border-color .15s;
+    position: relative;
+  }
+  .card:hover { box-shadow: var(--shadow-hover); border-color: var(--border-strong); }
+  .card.warn::before {
+    content: "";
+    position: absolute; left: 0; top: 12px; bottom: 12px;
+    width: 3px; background: var(--warn);
+    border-radius: 0 3px 3px 0;
+  }
+  .card .meta {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-bottom: 8px;
+    align-items: center;
+  }
+  .badge {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .badge.reg { background: var(--reg-soft); color: var(--reg); }
+  .badge.trial { background: var(--trial-soft); color: var(--trial); }
+  .badge.research { background: var(--research-soft); color: var(--research); }
+  .badge.trade { background: var(--trade-soft); color: var(--trade); }
+  .badge.bio { background: var(--bio-soft); color: var(--bio); }
+  .badge.warn { background: var(--warn-soft); color: var(--warn); }
+  .badge.outline {
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    color: var(--text-dim);
+  }
+  .source-line {
+    margin-left: auto;
+    color: var(--text-faint);
+    font-size: 11.5px;
+    font-family: var(--mono);
+  }
+  .card h3 {
+    margin: 2px 0 6px;
+    font-size: 15.5px;
+    line-height: 1.35;
+    font-weight: 600;
+    letter-spacing: -.2px;
+  }
+  .card h3 a { color: var(--text); }
+  .card h3 a:hover { color: var(--accent); text-decoration: none; }
+  .excerpt {
+    color: var(--text-dim);
+    font-size: 13.2px;
+    line-height: 1.5;
+    margin: 0 0 10px;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .foot {
+    margin-top: auto;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11.5px;
+    color: var(--text-faint);
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+  }
+  .foot a {
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .tags {
+    display: flex; flex-wrap: wrap; gap: 4px;
+  }
+  .tags span {
+    font-size: 10.5px;
+    color: var(--text-faint);
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    padding: 1px 7px;
+    border-radius: 4px;
+  }
+
+  /* EMPTY STATE */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-faint);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius);
+  }
+  .empty b { color: var(--text); }
+
+  /* SECTIONS / FOOTER */
+  .section-head {
+    display: flex; align-items: center; gap: 10px;
+    margin: 32px 0 14px;
+  }
+  .section-head h2 {
+    margin: 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    color: var(--text-dim);
+    font-weight: 700;
+  }
+  .section-head .rule {
+    flex: 1; height: 1px; background: var(--border);
+  }
+  .sources-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+  .sgcard {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+  .sgcard h4 {
+    margin: 0 0 8px;
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-dim);
+  }
+  .sgcard ul {
+    margin: 0; padding: 0; list-style: none;
+    font-size: 13px;
+  }
+  .sgcard li {
+    padding: 3px 0;
+  }
+  .sgcard a:hover { color: var(--accent); }
+  .ext { opacity: .5; margin-left: 4px; font-size: 10px; }
+
+  .disclaimer {
+    margin-top: 36px;
+    padding: 14px 16px;
+    background: var(--warn-soft);
+    border: 1px solid var(--warn);
+    border-left-width: 4px;
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 13px;
+  }
+  .disclaimer b { color: var(--warn); }
+
+  .credits {
+    margin-top: 28px;
+    text-align: center;
+    color: var(--text-faint);
+    font-size: 11.5px;
+  }
+
+  /* X SEARCH LINKS */
+  .xlinks {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-bottom: 4px;
+  }
+  .xlink {
+    font-size: 12.5px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 6px 11px;
+    border-radius: 8px;
+    color: var(--text-dim);
+    transition: all .15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .xlink:hover { color: var(--text); border-color: var(--border-strong); text-decoration: none; }
+  .xlink b { color: var(--accent); font-weight: 600; }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 16px 14px 48px; }
+    .head { flex-direction: column; align-items: flex-start; }
+    .title-block h1 { font-size: 20px; }
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="head">
+    <div class="brand">
+      <div class="logo">P</div>
+      <div class="title-block">
+        <h1>Peptide Signals</h1>
+        <div class="tag">Curated peptide intelligence — FDA actions, trials, research &amp; grey-market watch.</div>
+      </div>
+    </div>
+    <div class="head-right">
+      <div class="stat"><b id="stat-count">—</b> signals · updated <b id="stat-updated">—</b></div>
+      <button class="iconbtn" id="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">
+        <span id="theme-icon">🌙</span><span id="theme-label">Dark</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="search" type="search" placeholder="Search compound, sponsor, trial, source… (e.g. retatrutide, BPC-157, FDA)" />
+    </div>
+    <select class="sort" id="sort">
+      <option value="date">Sort: Newest first</option>
+      <option value="date-asc">Sort: Oldest first</option>
+      <option value="source">Sort: Source</option>
+    </select>
+  </div>
+
+  <!-- TAB FILTER -->
+  <div class="tabs" id="tabs"></div>
+
+  <!-- CARDS -->
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" hidden>No signals match this filter. <b>Clear search</b> or pick another category.</div>
+
+  <!-- X / SOCIAL LINKS -->
+  <div class="section-head"><h2>X / Social Search Shortcuts</h2><div class="rule"></div></div>
+  <div class="xlinks" id="xlinks"></div>
+  <div style="font-size:11.5px;color:var(--text-faint);margin-top:4px">
+    Click any tag to open the live X search in a new tab. Tracking these queries is the fastest way to spot grey-market chatter, new vendors, and anecdotal user reports as they happen.
+  </div>
+
+  <!-- SOURCES MONITORED -->
+  <div class="section-head"><h2>Sources Monitored</h2><div class="rule"></div></div>
+  <div class="sources-grid">
+    <div class="sgcard">
+      <h4>Regulators</h4>
+      <ul>
+        <li><a href="https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/press-announcements/rss.xml" target="_blank" rel="noopener">FDA Press Announcements<span class="ext">↗</span></a></li>
+        <li><a href="https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/drug-information/rss.xml" target="_blank" rel="noopener">FDA Drug Information<span class="ext">↗</span></a></li>
+        <li><a href="https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/recalls/rss.xml" target="_blank" rel="noopener">FDA Recalls<span class="ext">↗</span></a></li>
+        <li><a href="https://www.ema.europa.eu/en/news" target="_blank" rel="noopener">EMA News<span class="ext">↗</span></a></li>
+        <li><a href="https://clinicaltrials.gov/" target="_blank" rel="noopener">ClinicalTrials.gov<span class="ext">↗</span></a></li>
+      </ul>
+    </div>
+    <div class="sgcard">
+      <h4>Science</h4>
+      <ul>
+        <li><a href="https://pubmed.ncbi.nlm.nih.gov/?term=peptide&filter=simsearch1.fha&sort=date" target="_blank" rel="noopener">PubMed (peptide, recent)<span class="ext">↗</span></a></li>
+        <li><a href="https://www.biorxiv.org/search/peptide" target="_blank" rel="noopener">bioRxiv<span class="ext">↗</span></a></li>
+        <li><a href="https://www.medrxiv.org/search/peptide" target="_blank" rel="noopener">medRxiv<span class="ext">↗</span></a></li>
+        <li><a href="https://www.nature.com/subjects/peptides" target="_blank" rel="noopener">Nature: peptides<span class="ext">↗</span></a></li>
+        <li><a href="https://www.nejm.org/" target="_blank" rel="noopener">NEJM<span class="ext">↗</span></a></li>
+      </ul>
+    </div>
+    <div class="sgcard">
+      <h4>Trade Press</h4>
+      <ul>
+        <li><a href="https://endpts.com/feed/" target="_blank" rel="noopener">Endpoints News<span class="ext">↗</span></a></li>
+        <li><a href="https://www.statnews.com/feed/" target="_blank" rel="noopener">STAT News<span class="ext">↗</span></a></li>
+        <li><a href="https://www.fiercebiotech.com/rss/xml/biotech" target="_blank" rel="noopener">FierceBiotech<span class="ext">↗</span></a></li>
+        <li><a href="https://www.fiercepharma.com/rss/xml/pharma" target="_blank" rel="noopener">FiercePharma<span class="ext">↗</span></a></li>
+        <li><a href="https://www.biopharmadive.com/feeds/news/" target="_blank" rel="noopener">BioPharma Dive<span class="ext">↗</span></a></li>
+        <li><a href="https://www.biospace.com/rss/news" target="_blank" rel="noopener">BioSpace<span class="ext">↗</span></a></li>
+      </ul>
+    </div>
+    <div class="sgcard">
+      <h4>Foreign / Mainstream</h4>
+      <ul>
+        <li><a href="https://www.reuters.com/business/healthcare-pharmaceuticals/" target="_blank" rel="noopener">Reuters Healthcare<span class="ext">↗</span></a></li>
+        <li><a href="https://www.bbc.com/news/health" target="_blank" rel="noopener">BBC Health<span class="ext">↗</span></a></li>
+        <li><a href="https://www.scmp.com/topics/biotech" target="_blank" rel="noopener">SCMP Biotech<span class="ext">↗</span></a></li>
+        <li><a href="https://asia.nikkei.com/Business/Pharmaceuticals" target="_blank" rel="noopener">Nikkei Asia Pharma<span class="ext">↗</span></a></li>
+        <li><a href="https://koreabiomed.com/" target="_blank" rel="noopener">Korea Biomedical Review<span class="ext">↗</span></a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    <b>⚠ Educational use only.</b> Peptide Signals aggregates publicly reported research and regulatory news for monitoring purposes. Nothing here is medical, legal, or investment advice. Grey-market &amp; "research-use only" peptides are not FDA-approved for human use — consult a licensed clinician before any protocol.
+  </div>
+
+  <div class="credits">
+    Curated by Claude · Peptide Signals · Light/dark mode preference is saved in your browser.<br/>
+    Ask Claude to refresh signals or add new sources at any time.
+  </div>
+</div>
+
+<script>
+/* ---------- DATA ---------- */
+const items = [
+  // ---------- TRIALS ----------
+  {
+    title: "Retatrutide TRIUMPH-1 Phase 3: 30.3% Weight Loss at 104 Weeks — Matches Bariatric Surgery",
+    source: "Eli Lilly",
+    sourceType: "Trials",
+    category: "trials",
+    date: "2026-05-21",
+    url: "https://investor.lilly.com/news-releases/news-release-details/lillys-triple-agonist-retatrutide-delivered-weight-loss-average",
+    excerpt: "Topline TRIUMPH-1 data: 12 mg retatrutide produced 28.3% mean weight loss at 80 weeks and 30.3% at 104 weeks in adults with obesity (no diabetes). 45.3% of top-dose patients hit at least 30% weight loss — magnitudes previously only seen with bariatric surgery. Headline signal for the GLP-1/GIP/glucagon triple-agonist class.",
+    tags: ["retatrutide","Lilly","Phase 3","obesity","bariatric"]
+  },
+  {
+    title: "TechTimes / AJMC Coverage: Retatrutide 'Matches Bariatric Surgery' — Mainstream Wave Begins",
+    source: "TechTimes",
+    sourceType: "Trade Press",
+    category: "trade",
+    date: "2026-05-22",
+    url: "https://www.techtimes.com/articles/317019/20260522/eli-lillys-retatrutide-matches-bariatric-surgery-30-weight-loss-phase-3-trial.htm",
+    excerpt: "Mainstream and trade coverage piling onto TRIUMPH-1 framing the readout as an inflection point: Lilly now has three GLP-1-class assets (Zepbound, Foundayo, retatrutide) covering injectable, oral pill, and triple-agonist tiers. Analysts revising 2030+ obesity TAM upward again.",
+    tags: ["retatrutide","Lilly","coverage","obesity"]
+  },
+  {
+    title: "Novo Nordisk AMAZE-12 Phase 3 Begins: CagriSema for Weight-Loss Maintenance",
+    source: "Novo Nordisk",
+    sourceType: "Trials",
+    category: "trials",
+    date: "2026-05-18",
+    url: "https://www.novonordisk.com/news-and-media/news-and-ir-materials.html",
+    excerpt: "Recruitment opened for AMAZE-12, the first Phase 3 to test the GLP-1/amylin combo specifically as a maintenance therapy after initial weight loss. Designed to address a gap competitors haven't priced in: the long-tail problem of weight regain after stopping injectables.",
+    tags: ["CagriSema","Novo Nordisk","Phase 3","amylin","maintenance"]
+  },
+  {
+    title: "Orforglipron (Foundayo): 13% Weight Loss in Adults 65+ — New ATTAIN-1/2 Analysis",
+    source: "Eli Lilly",
+    sourceType: "Trials",
+    category: "trials",
+    date: "2026-05-13",
+    url: "https://investor.lilly.com/news-releases/news-release-details/foundayo-orforglipron-once-daily-pill-taken-without-food-or",
+    excerpt: "Subgroup analysis of ATTAIN-1 and ATTAIN-2 shows the oral once-daily GLP-1 produced up to 13% weight reduction in patients 65 and older — a population usually underrepresented and where injection burden is highest. Strengthens the case for oral over injectable for geriatric prescribers.",
+    tags: ["orforglipron","Foundayo","Lilly","geriatric","oral GLP-1"]
+  },
+  {
+    title: "Novo Presents CagriSema OASIS-4 Oral Data at European Obesity Congress, Istanbul",
+    source: "Novo Nordisk",
+    sourceType: "Trials",
+    category: "trials",
+    date: "2026-05-12",
+    url: "https://www.patientcareonline.com/view/novo-nordisk-files-nda-for-cagrisema-novel-glp-1-amylin-combination-for-chronic-weight-management",
+    excerpt: "Fresh OASIS-4 readout presented at ECO 2026 in Istanbul reinforces Novo's oral GLP-1 portfolio strategy as the CagriSema NDA awaits FDA action. Combination GLP-1/amylin remains Novo's strongest answer to Lilly's triple-agonist pipeline.",
+    tags: ["CagriSema","Novo","ECO","oral GLP-1","amylin"]
+  },
+  {
+    title: "Boehringer Survodutide LIVERAGE Phase 3 in MASH — Topline Expected H2 2026",
+    source: "Boehringer Ingelheim",
+    sourceType: "Trials",
+    category: "trials",
+    date: "2026-04-29",
+    url: "https://www.boehringer-ingelheim.com/human-health/metabolic-diseases/survodutide-us-fda-breakthrough-therapy-phase-3-trials-mash",
+    excerpt: "Boehringer's dual GLP-1/glucagon agonist holds FDA Breakthrough Therapy designation for non-cirrhotic MASH. LIVERAGE and LIVERAGE-Cirrhosis Phase 3 trials read out later in 2026 — first opportunity to see whether a glucagon-co-agonist beats GLP-1 monotherapy on direct liver-fibrosis endpoints.",
+    tags: ["survodutide","Boehringer","MASH","Phase 3","liver"]
+  },
+
+  // ---------- REGULATORY ----------
+  {
+    title: "FDA Updates 503A Bulk Drug Substances List (May 14, 2026)",
+    source: "FDA",
+    sourceType: "Regulatory",
+    category: "regulatory",
+    date: "2026-05-14",
+    url: "https://www.fda.gov/media/94155/download",
+    excerpt: "FDA republished the interim 503A Bulks List, formally removing 12 peptides from Category 2 (significant-safety-concern) following withdrawal of their nominations. BPC-157, KPV, TB-500, MOTS-c, Emideltide (DSIP), Semax, and Epitalon now move toward PCAC review for potential 503A inclusion.",
+    tags: ["503A","FDA","BPC-157","TB-500","compounding"]
+  },
+  {
+    title: "Federal Register: FDA Identifies Three GLP-1s to Exclude From 503B Bulks List",
+    source: "Federal Register",
+    sourceType: "Regulatory",
+    category: "regulatory",
+    greyMarket: true,
+    date: "2026-05-01",
+    url: "https://www.federalregister.gov/documents/2026/05/01/2026-08552/list-of-bulk-drug-substances-for-which-there-is-a-clinical-need-under-section-503b-of-the-federal",
+    excerpt: "Formal Federal Register notice naming semaglutide, tirzepatide, and liraglutide as bulk substances FDA proposes NOT to include on the 503B Bulks List. Comment period closes June 30, 2026. Effectively forecloses large-scale outsourcing-facility compounding once finalized.",
+    tags: ["GLP-1","503B","Federal Register","semaglutide","tirzepatide"]
+  },
+  {
+    title: "Pharmacy Times: FDA Moves to Permanently Close the Door on Compounded GLP-1s",
+    source: "Pharmacy Times",
+    sourceType: "Trade Press",
+    category: "regulatory",
+    greyMarket: true,
+    date: "2026-05-06",
+    url: "https://www.pharmacytimes.com/view/fda-moves-to-permanently-close-the-door-on-compounded-glp-1s",
+    excerpt: "Industry analysis of the 503B exclusion proposal: a permanent shortage-list pathway for compounded GLP-1s is now closed, and FDA is making clear that 503A and 503B both fall out of bounds. Telehealth firms facing the steepest reset.",
+    tags: ["GLP-1","503B","compounding","telehealth"]
+  },
+  {
+    title: "PCAC July 23–24 Meeting: Seven Peptides Up for 503A Bulks List Inclusion",
+    source: "FDA",
+    sourceType: "Regulatory",
+    category: "regulatory",
+    date: "2026-04-16",
+    url: "https://www.fda.gov/advisory-committees/advisory-committee-calendar/july-23-24-2026-meeting-pharmacy-compounding-advisory-committee-07232026",
+    excerpt: "Pharmacy Compounding Advisory Committee will review BPC-157, KPV, TB-500, MOTS-c, Emideltide (DSIP), Semax, and Epitalon. Public comments due July 9 for committee consideration; additional five peptides (GHK-Cu, Melanotan II, LL-37, Dihexa, PEG-MGF) go before PCAC before end of February 2027.",
+    tags: ["PCAC","503A","BPC-157","epitalon","watchlist"]
+  },
+  {
+    title: "Foley & Lardner Analysis: FDA to Consider Lifting Restrictions on Numerous Compounded Peptides",
+    source: "Foley & Lardner",
+    sourceType: "Regulatory",
+    category: "regulatory",
+    date: "2026-05-02",
+    url: "https://www.foley.com/insights/publications/2026/05/fda-to-consider-lifting-restrictions-on-numerous-compounded-peptides/",
+    excerpt: "Detailed legal analysis of the April-May 2026 Federal Register notices: lays out how the FDA's PCAC review, Category 2 removals, and the GLP-1 503B exclusion fit together. Useful primer for pharmacies, prescribers, and investors trying to map what is actually legal where, when.",
+    tags: ["analysis","PCAC","compounding","legal"]
+  },
+  {
+    title: "Washington Post: Amid Wellness Craze, FDA Weighs Lifting Peptide Restrictions",
+    source: "Washington Post",
+    sourceType: "Trade Press",
+    category: "regulatory",
+    date: "2026-04-15",
+    url: "https://www.washingtonpost.com/health/2026/04/15/peptides-fda-compounding/",
+    excerpt: "Mainstream Washington Post coverage frames the FDA's peptide reclassification as a direct response to RFK Jr.'s HHS pressure plus the booming wellness/biohacking market. Captures the political backdrop driving the regulatory shift.",
+    tags: ["WaPo","RFK","wellness","compounding","HHS"]
+  },
+
+  // ---------- THERAPEUTIC ----------
+  {
+    title: "Pluvicto Label Expansion in mHSPC — FDA Decision Tracked for H2 2026",
+    source: "Novartis",
+    sourceType: "Regulatory",
+    category: "therapeutic",
+    date: "2026-05-05",
+    url: "https://www.novartis.com/news/media-releases/fda-approves-novartis-radioligand-therapy-pluvicto-earlier-use-chemotherapy-psma-positive-metastatic-castration-resistant-prostate-cancer",
+    excerpt: "Novartis's PSMA-targeted radioligand peptide therapy is on track for a second label expansion in H2 2026 — this time into metastatic hormone-sensitive prostate cancer. Would be the first PSMA radiopeptide approved that early in the prostate-cancer treatment sequence.",
+    tags: ["Pluvicto","radioligand","Novartis","PSMA","prostate"]
+  },
+  {
+    title: "Radiopharm 177Lu-RAD202 Phase 1 HEAT Data at AACR 2026 — HER2 Radiopeptide",
+    source: "Radiopharm Theranostics",
+    sourceType: "Trials",
+    category: "therapeutic",
+    date: "2026-04-28",
+    url: "https://www.sec.gov/Archives/edgar/data/1949257/000121390026045363/ea028692701ex99-1.htm",
+    excerpt: "First-in-human HEAT data for 177Lu-RAD202, a HER2-targeted radiopharmaceutical, presented at AACR 2026: encouraging tumor uptake and favorable safety at the lowest dose. Early signal in a category (radiopeptides outside PSMA) that has been under-developed.",
+    tags: ["radiopharm","HER2","Phase 1","AACR","177Lu"]
+  },
+  {
+    title: "PDC Pipeline Snapshot: 6 Peptide-Drug Conjugates in Phase 3, ~96 in Active Development",
+    source: "Journal of Peptide Science",
+    sourceType: "Research",
+    category: "therapeutic",
+    date: "2026-04-22",
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC12254541/",
+    excerpt: "Peer-reviewed pipeline review: cathepsin-B-cleavable linker PDCs and cyclic tumor-homing peptides now make up the largest growth segment. Only Lutathera remains FDA-approved after Pepaxto's US withdrawal, but the late-stage funnel is materially bigger than 12 months ago.",
+    tags: ["PDC","oncology","pipeline","cathepsin","linker"]
+  },
+  {
+    title: "Innovative Peptide Therapeutics in Cancer: Diagnostic & Treatment Pipeline Review",
+    source: "PMC / NCBI",
+    sourceType: "Research",
+    category: "therapeutic",
+    date: "2026-04-12",
+    url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC12295999/",
+    excerpt: "Peer-reviewed mapping of peptide modalities in oncology: diagnostic radiopeptides, tumor-homing sequences, peptide vaccines, and PDC linkers. Discusses real-world translation challenges (serum stability, manufacturing cost) and where translational gaps are widest.",
+    tags: ["oncology","peptide vaccine","radiopeptide","PDC","review"]
+  },
+
+  // ---------- RESEARCH ----------
+  {
+    title: "bioRxiv: Framework for Peptide Identification on Commercial Nanopore Platforms",
+    source: "bioRxiv",
+    sourceType: "Research",
+    category: "research",
+    date: "2026-05-21",
+    url: "https://www.biorxiv.org/content/10.64898/2026.05.19.726067v1",
+    excerpt: "Preprint demonstrates a reproducible workflow that resolves single-amino-acid substitutions on commercially available nanopore hardware. Lowers the barrier to nanopore-based proteomics and — if it holds up to peer review — could change how peptide purity / counterfeit detection is done at the lab bench.",
+    tags: ["nanopore","proteomics","preprint","analytical"]
+  },
+  {
+    title: "bioRxiv: Structural Bias in Machine-Learning-Guided Peptide Design",
+    source: "bioRxiv",
+    sourceType: "Research",
+    category: "research",
+    date: "2026-05-08",
+    url: "https://www.biorxiv.org/content/10.64898/2026.05.06.721805v1",
+    excerpt: "Critical preprint showing that current ML-guided peptide design tools (a fast-growing class of drug-discovery models) systematically overproduce certain secondary-structure motifs. Important caveat for the wave of 'AI-designed peptide' headlines arriving each week.",
+    tags: ["AI","ML","peptide design","preprint","drug discovery"]
+  },
+  {
+    title: "Medscape: EASO Update Clarifies Tirzepatide vs Semaglutide Roles in Obesity Care",
+    source: "Medscape",
+    sourceType: "Research",
+    category: "research",
+    date: "2026-05-04",
+    url: "https://www.medscape.com/viewarticle/easo-update-gives-clearer-roles-tirzepatide-semaglutide-2026a1000g7w",
+    excerpt: "European Association for the Study of Obesity refreshed its algorithm post-SURMOUNT-5: tirzepatide now positioned as preferred for maximum weight loss, semaglutide for liver-fibrosis improvement. First major guideline body to formalize a head-to-head distinction between the two agents.",
+    tags: ["EASO","guidelines","tirzepatide","semaglutide","obesity"]
+  },
+
+  // ---------- TRADE PRESS / INDUSTRY ----------
+  {
+    title: "Peptide Health Industry Positioned for 'Explosive' Long-Term Growth (Global Wellness)",
+    source: "GlobeNewswire",
+    sourceType: "Trade Press",
+    category: "trade",
+    date: "2026-05-21",
+    url: "https://www.globenewswire.com/news-release/2026/05/21/3299366/0/en/Peptide-Based-Health-Industry-Positioned-for-Explosive-Long-Term-Growth-Across-Global-Wellness-Markets.html",
+    excerpt: "Industry briefing: peptide health products moving from niche biotech to mainstream wellness, with pharma, supplement, and DTC players all competing for the recovery / longevity / metabolic-health buyer. Tracks the broader consumer wave that's pulling regulatory attention behind it.",
+    tags: ["market","wellness","DTC","forecast","consumer"]
+  },
+
+  // ---------- BIOHACKING / GREY MARKET ----------
+  {
+    title: "Partnership for Safe Medicines: GLP-1 Safety Risks Update (May 2026)",
+    source: "Partnership for Safe Medicines",
+    sourceType: "Industry",
+    category: "biohacking",
+    greyMarket: true,
+    date: "2026-05-15",
+    url: "https://www.safemedicines.org/2026/05/glp-1-safety-risks-may-2026.html",
+    excerpt: "Updated tally: 455+ adverse-event reports tied to compounded semaglutide and 320+ for compounded tirzepatide. Underscores why FDA is pushing the 503B exclusion. Critical context for anyone evaluating compounded-vs-branded sourcing tradeoffs.",
+    tags: ["GLP-1","adverse events","compounding","safety","grey-market"]
+  },
+  {
+    title: "BSR Intelligence: Peptide Industry Briefing March–Early May 2026",
+    source: "BSR Intelligence",
+    sourceType: "Industry",
+    category: "biohacking",
+    greyMarket: true,
+    date: "2026-05-10",
+    url: "https://www.biotechresearch.co.uk/intelligence/peptide-industry-briefing-march-to-early-may-2026",
+    excerpt: "Independent intelligence briefing on the post-reclassification peptide market: counterfeit risk indicators rising as the legal grey zone widens, with Chinese-sourced bulk peptide imports showing the largest variance in Certificates of Analysis vs. actual content.",
+    tags: ["grey-market","counterfeit","supply chain","intelligence"]
+  },
+  {
+    title: "Austin Immortality Conference (May 30, 2026) — Peptides &amp; Regenerative Medicine Day",
+    source: "Austin Immortality Conference",
+    sourceType: "Industry",
+    category: "biohacking",
+    date: "2026-05-30",
+    url: "https://www.austinimmortalityconference.com/",
+    excerpt: "Upcoming consumer-longevity conference with a full day dedicated to peptide protocols, regenerative medicine, and 'real-world performance' content. Useful barometer for which compounds and protocols are gaining traction in the biohacking community after the Category 2 removals.",
+    tags: ["conference","longevity","biohacking","protocols"]
+  }
+];
+
+/* ---------- CATEGORIES ---------- */
+const CATS = [
+  { id: "all",         label: "All",                       icon: "" },
+  { id: "regulatory",  label: "Regulatory",                icon: "🏛" },
+  { id: "trials",      label: "Trials",                    icon: "🧪" },
+  { id: "therapeutic", label: "Therapeutic (Onc / Immune)",icon: "🧬" },
+  { id: "biohacking",  label: "Biohacking / Longevity",    icon: "♾" },
+  { id: "trade",       label: "Trade Press",               icon: "📰" },
+  { id: "research",    label: "Research",                  icon: "🔬" },
+  { id: "grey",        label: "⚠ Grey Market Watch",       icon: "", warn: true }
+];
+
+/* ---------- X / SOCIAL SHORTCUTS ---------- */
+const XQUERIES = [
+  { label: "retatrutide", q: "retatrutide -filter:retweets min_faves:5" },
+  { label: "tirzepatide", q: "tirzepatide -filter:retweets min_faves:5" },
+  { label: "BPC-157", q: "BPC-157 OR BPC157 -filter:retweets" },
+  { label: "TB-500", q: "TB-500 OR TB500 -filter:retweets" },
+  { label: "GLP-1", q: "GLP-1 (compounding OR shortage OR FDA) -filter:retweets" },
+  { label: "FDA peptide", q: "FDA (peptide OR compounding) -filter:retweets" },
+  { label: "Eli Lilly", q: "Lilly (orforglipron OR Foundayo OR retatrutide) -filter:retweets" },
+  { label: "Novo Nordisk", q: "Novo (Wegovy OR semaglutide) -filter:retweets" },
+  { label: "MOTS-c", q: "MOTS-c -filter:retweets" },
+  { label: "epitalon", q: "epitalon OR epithalon -filter:retweets" },
+  { label: "longevity peptides", q: "(longevity peptide) -filter:retweets min_faves:10" },
+  { label: "PCAC peptide", q: "(PCAC OR \"compounding advisory\") peptide" }
+];
+
+/* ---------- STATE ---------- */
+let state = {
+  cat: "all",
+  q: "",
+  sort: "date"
+};
+
+/* ---------- RENDER ---------- */
+const $tabs = document.getElementById("tabs");
+const $grid = document.getElementById("grid");
+const $empty = document.getElementById("empty");
+const $search = document.getElementById("search");
+const $sort = document.getElementById("sort");
+const $statCount = document.getElementById("stat-count");
+const $statUpdated = document.getElementById("stat-updated");
+
+function countFor(catId) {
+  if (catId === "all") return items.length;
+  if (catId === "grey") return items.filter(i => i.greyMarket).length;
+  return items.filter(i => i.category === catId).length;
+}
+
+function renderTabs() {
+  $tabs.innerHTML = CATS.map(c => `
+    <div class="tab ${state.cat===c.id?'active':''} ${c.warn?'warn':''}" data-cat="${c.id}">
+      ${c.icon?`<span>${c.icon}</span>`:""}<span>${c.label}</span>
+      <span class="count">${countFor(c.id)}</span>
+    </div>
+  `).join("");
+  $tabs.querySelectorAll(".tab").forEach(t => {
+    t.addEventListener("click", () => {
+      state.cat = t.dataset.cat;
+      renderTabs(); renderGrid();
+    });
+  });
+}
+
+function matches(it) {
+  // category filter
+  if (state.cat === "grey") { if (!it.greyMarket) return false; }
+  else if (state.cat !== "all" && it.category !== state.cat) return false;
+
+  // search filter
+  if (state.q) {
+    const hay = (it.title + " " + it.excerpt + " " + it.source + " " + (it.tags||[]).join(" ")).toLowerCase();
+    if (!hay.includes(state.q.toLowerCase())) return false;
+  }
+  return true;
+}
+
+function sortItems(arr) {
+  const copy = arr.slice();
+  if (state.sort === "date") copy.sort((a,b) => b.date.localeCompare(a.date));
+  else if (state.sort === "date-asc") copy.sort((a,b) => a.date.localeCompare(b.date));
+  else if (state.sort === "source") copy.sort((a,b) => a.source.localeCompare(b.source));
+  return copy;
+}
+
+function badgeClass(cat) {
+  return ({
+    regulatory: "reg",
+    trials: "trial",
+    research: "research",
+    therapeutic: "research",
+    trade: "trade",
+    biohacking: "bio"
+  })[cat] || "";
+}
+
+function fmtDate(s) {
+  // s = YYYY-MM-DD
+  const d = new Date(s + "T12:00:00");
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+function renderGrid() {
+  const filtered = sortItems(items.filter(matches));
+  if (filtered.length === 0) {
+    $grid.innerHTML = "";
+    $empty.hidden = false;
+  } else {
+    $empty.hidden = true;
+    $grid.innerHTML = filtered.map(it => `
+      <article class="card ${it.greyMarket?'warn':''}">
+        <div class="meta">
+          <span class="badge ${badgeClass(it.category)}">${labelFor(it.category)}</span>
+          ${it.greyMarket ? `<span class="badge warn">⚠ Grey</span>` : ""}
+          <span class="source-line">${escapeHtml(it.source)} · ${fmtDate(it.date)}</span>
+        </div>
+        <h3><a href="${it.url}" target="_blank" rel="noopener">${escapeHtml(it.title)}</a></h3>
+        <p class="excerpt">${escapeHtml(it.excerpt)}</p>
+        <div class="foot">
+          <div class="tags">
+            ${(it.tags||[]).slice(0,4).map(t=>`<span>${escapeHtml(t)}</span>`).join("")}
+          </div>
+          <a href="${it.url}" target="_blank" rel="noopener">Read ↗</a>
+        </div>
+      </article>
+    `).join("");
+  }
+  $statCount.textContent = filtered.length;
+}
+
+function labelFor(cat) {
+  return ({
+    regulatory: "Regulatory",
+    trials: "Trials",
+    research: "Research",
+    therapeutic: "Therapeutic",
+    trade: "Trade Press",
+    biohacking: "Biohacking"
+  })[cat] || cat;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[c]);
+}
+
+/* ---------- X LINKS ---------- */
+function renderXLinks() {
+  document.getElementById("xlinks").innerHTML = XQUERIES.map(x => `
+    <a class="xlink" target="_blank" rel="noopener"
+       href="https://x.com/search?q=${encodeURIComponent(x.q)}&src=typed_query&f=live">
+       <b>𝕏</b> ${escapeHtml(x.label)}
+    </a>
+  `).join("");
+}
+
+/* ---------- STAT BAR ---------- */
+function setUpdated() {
+  // Newest item date
+  const newest = items.map(i => i.date).sort().slice(-1)[0];
+  $statUpdated.textContent = fmtDate(newest);
+}
+
+/* ---------- THEME ---------- */
+const $themeToggle = document.getElementById("theme-toggle");
+const $themeIcon = document.getElementById("theme-icon");
+const $themeLabel = document.getElementById("theme-label");
+
+function applyTheme(t) {
+  if (t === "dark") {
+    document.documentElement.setAttribute("data-theme", "dark");
+    $themeIcon.textContent = "☀";
+    $themeLabel.textContent = "Light";
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+    $themeIcon.textContent = "🌙";
+    $themeLabel.textContent = "Dark";
+  }
+}
+function getStoredTheme() {
+  try { return localStorage.getItem("peptide-signals-theme") || "light"; } catch(e) { return "light"; }
+}
+function storeTheme(t) {
+  try { localStorage.setItem("peptide-signals-theme", t); } catch(e) {}
+}
+$themeToggle.addEventListener("click", () => {
+  const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  applyTheme(next); storeTheme(next);
+});
+applyTheme(getStoredTheme());
+
+/* ---------- EVENTS ---------- */
+$search.addEventListener("input", e => { state.q = e.target.value; renderGrid(); });
+$sort.addEventListener("change", e => { state.sort = e.target.value; renderGrid(); });
+
+/* ---------- INIT ---------- */
+renderTabs();
+renderGrid();
+renderXLinks();
+setUpdated();
+</script>
+</body>
+</html>
